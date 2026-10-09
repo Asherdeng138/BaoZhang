@@ -1,0 +1,39 @@
+plugins { id 'com.android.application' }
+def personalSigning = new Properties()
+def personalSigningFile = rootProject.file('.tools/signing.properties')
+if (personalSigningFile.exists()) personalSigningFile.withInputStream { personalSigning.load(it) }
+android {
+    namespace 'com.asher.baozhang'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'com.asher.baozhang'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+        ndk { abiFilters 'arm64-v8a', 'x86_64' }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    signingConfigs {
+        personal {
+            if (personalSigningFile.exists()) {
+                storeFile rootProject.file(personalSigning['storeFile'])
+                storePassword personalSigning['storePassword']
+                keyAlias personalSigning['keyAlias']
+                keyPassword personalSigning['keyPassword']
+            }
+        }
+    }
+    buildTypes { release { minifyEnabled false; if (personalSigningFile.exists()) signingConfig signingConfigs.personal } }
+    packaging { jniLibs { useLegacyPackaging = false } }
+    testOptions { unitTests.returnDefaultValues = true }
+}
+dependencies {
+    implementation 'androidx.core:core:1.16.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'androidx.exifinterface:exifinterface:1.4.1'
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
+    implementation 'com.google.mlkit:text-recognition-chinese:16.0.1'
+    testImplementation 'junit:junit:4.13.2'
+}

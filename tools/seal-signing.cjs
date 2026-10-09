@@ -1,0 +1,11 @@
+const fs=require('node:fs'),crypto=require('node:crypto');
+const properties=Object.fromEntries(fs.readFileSync('.tools/signing.properties','utf8').trim().split(/\r?\n/).map(line=>{const p=line.indexOf('=');return [line.slice(0,p),line.slice(p+1)];}));
+const plain=Buffer.from(JSON.stringify({keystoreBase64:fs.readFileSync(properties.storeFile).toString('base64'),storePassword:properties.storePassword,keyAlias:properties.keyAlias,keyPassword:properties.keyPassword}));
+const key=crypto.randomBytes(32),iv=crypto.randomBytes(12);
+const cipher=crypto.createCipheriv('aes-256-gcm',key,iv);
+const encrypted=Buffer.concat([cipher.update(plain),cipher.final()]);
+const wrapped=crypto.publicEncrypt({key:fs.readFileSync('ci/signing-recovery-public.pem'),oaepHash:'sha256',padding:crypto.constants.RSA_PKCS1_OAEP_PADDING},key);
+fs.mkdirSync('output',{recursive:true});
+fs.writeFileSync('output/signing-recovery.encrypted.json',JSON.stringify({version:1,algorithm:'RSA-OAEP-SHA256+A256GCM',wrappedKey:wrapped.toString('base64'),iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),ciphertext:encrypted.toString('base64')},null,2));
+plain.fill(0);key.fill(0);
+console.log('Signing recovery encrypted to the owner public key.');

@@ -1,0 +1,71 @@
+name: Build Android APK
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'verification/**', 'BaoZhang-preview.html']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Install SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Test receipt parsing
+        run: node --test tests/parser.test.cjs
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          mkdir -p .tools
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 --decode > .tools/personal-release.p12
+          else
+            KEYSTORE_PASSWORD="$(openssl rand -hex 32)"
+            echo "::add-mask::$KEYSTORE_PASSWORD"
+            export KEYSTORE_PASSWORD
+            keytool -genkeypair -keystore .tools/personal-release.p12 -storetype PKCS12 -storepass:env KEYSTORE_PASSWORD -keypass:env KEYSTORE_PASSWORD -alias baozhang -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=BaoZhang Personal,OU=Personal App,O=Personal,C=GB'
+          fi
+          printf 'storeFile=.tools/personal-release.p12\nstorePassword=%s\nkeyAlias=baozhang\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" > .tools/signing.properties
+          node tools/seal-signing.cjs
+      - name: Test and build
+        run: gradle --no-daemon testDebugUnitTest lintRelease assembleRelease
+      - name: Verify signature and Android 16 page alignment
+        run: |
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 app/build/outputs/apk/release/app-release.apk
+          python3 tools/check-apk-alignment.py app/build/outputs/apk/release/app-release.apk
+          cp app/build/outputs/apk/release/app-release.apk output/BaoZhang-0.1.0.apk
+          sha256sum output/BaoZhang-0.1.0.apk > output/BaoZhang-0.1.0.apk.sha256
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: BaoZhang-Android16
+          path: output/*
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-diagnostics
+          path: |
+            app/build/reports/
+            output/signing-recovery.encrypted.json
+          retention-days: 14

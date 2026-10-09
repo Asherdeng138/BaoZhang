@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#246b5b"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><title>随手报账</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="app">
+  <header><div class="brand"><span class="brand-icon" id="brandIcon"></span><div>随手报账<small>每一笔，都有据可查</small></div></div><button class="icon-btn" id="settingsButton" aria-label="说明与备份"></button></header>
+  <main id="main"></main>
+  <nav id="bottomNav" aria-label="主导航"></nav>
+</div>
+<div class="modal-backdrop hidden" id="modalBackdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><h2 id="modalTitle"></h2><button class="icon-btn" id="closeModal" aria-label="关闭">×</button></div><div id="modalBody"></div></section></div>
+<div class="busy hidden" id="busy"><div class="busy-card"><div class="spinner"></div><strong id="busyText">正在处理…</strong><p>请稍候，原件会保留在手机中</p></div></div>
+<div class="toast hidden" id="toast" role="status"></div>
+<script src="parser.js"></script><script src="app.js"></script>
+</body></html>

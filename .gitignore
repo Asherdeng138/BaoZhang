@@ -1,0 +1,6 @@
+.gradle/
+.tools/
+**/build/
+local.properties
+output/
+*.keystore
