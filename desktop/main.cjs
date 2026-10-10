@@ -12,12 +12,12 @@ app.whenReady().then(async()=>{
  session.defaultSession.setPermissionRequestHandler((contents,permission,callback)=>callback(false));
  session.defaultSession.webRequest.onBeforeRequest({urls:['http://*/*','https://*/*']},(details,callback)=>callback({cancel:true}));
  const handler=(name,fn,serial=true)=>ipcMain.handle('bz:'+name,(event,...args)=>{
-  if(event.sender!==win.webContents||event.senderFrame.url!==allowedURL)throw Error('������Դ��Ч');
+  if(event.sender!==win.webContents||event.senderFrame.url!==allowedURL)throw Error('请求来源无效');
   const run=()=>fn(...args);if(!serial)return run();const task=queue.then(run,run);queue=task.catch(()=>{});return task;
  });
  const choose=async(options)=>testing?{canceled:false,filePaths:options.properties?.includes('openDirectory')?[process.env.BAOZHANG_TEST_OUTPUT]:JSON.parse(process.env.BAOZHANG_TEST_FILES||'[]')}:dialog.showOpenDialog(win,options);
  handler('list',()=>store.list());
- handler('choose',async category=>{const result=await choose({title:'ѡ��Ʊ���ɶ�ѡ',properties:['openFile','multiSelections'],filters:[{name:'��ƱͼƬ�� PDF',extensions:['jpg','jpeg','png','webp','pdf']}]});return result.canceled?null:store.importFiles(result.filePaths,category);});
+ handler('choose',async category=>{const result=await choose({title:'选择发票，可多选',properties:['openFile','multiSelections'],filters:[{name:'发票图片或 PDF',extensions:['jpg','jpeg','png','webp','pdf']}]});return result.canceled?null:store.importFiles(result.filePaths,category);});
  handler('import',(files,category)=>store.importFiles(files,category));
  handler('read',id=>store.read(id));
  handler('save',(id,fields)=>store.save(id,fields));
@@ -26,18 +26,18 @@ app.whenReady().then(async()=>{
  handler('mark',(from,to,type)=>store.mark(from,to,type));
  let ocrQueue=Promise.resolve();
  handler('ocr',bytes=>{const run=async()=>{
-  if(!bytes||bytes.byteLength>50*1024*1024)throw Error('ʶ��ͼƬ�������');
+  if(!bytes||bytes.byteLength>50*1024*1024)throw Error('识别图片体积超限');
   if(!workerPromise)workerPromise=createWorker(['eng','chi_sim'],1,{langPath:path.join(__dirname,'models'),gzip:false,cachePath:path.join(app.getPath('userData'),'ocr-cache'),workerPath:require.resolve('tesseract.js/src/worker-script/node/index.js')}).catch(e=>{workerPromise=null;throw e;});
   const worker=await workerPromise;const result=await worker.recognize(Buffer.from(bytes));return result.data.text;
  };const task=ocrQueue.then(run,run);ocrQueue=task.catch(()=>{});return task;},false);
- handler('export',async q=>{store.exportRows(q);const dest=await choose({title:'ѡ�񵼳��ļ���',properties:['openDirectory','createDirectory']});if(dest.canceled)return null;const result=await store.export(q,dest.filePaths[0],bytes=>{const image=nativeImage.createFromBuffer(bytes);if(image.isEmpty())throw Error('ͼƬ��ʽ�޷�����');return image.toPNG();});lastExport=result.folder;return result;});
+ handler('export',async q=>{store.exportRows(q);const dest=await choose({title:'选择导出文件夹',properties:['openDirectory','createDirectory']});if(dest.canceled)return null;const result=await store.export(q,dest.filePaths[0],bytes=>{const image=nativeImage.createFromBuffer(bytes);if(image.isEmpty())throw Error('图片格式无法导出');return image.toPNG();});lastExport=result.folder;return result;});
  handler('openExport',async()=>{if(lastExport&&!testing)await shell.openPath(lastExport);});
- handler('backup',async()=>{const result=await dialog.showSaveDialog(win,{title:'����ȫ����Ʊ������',defaultPath:'BaoZhang-Backup-'+new Date().toISOString().slice(0,10)+'.zip',filters:[{name:'���˱���',extensions:['zip']}]});if(result.canceled)return null;return store.backup(result.filePath);});
- handler('restore',async()=>{const result=await dialog.showOpenDialog(win,{title:'�ָ����԰汸�ݣ��ϲ�������������Ʊ�ݣ�',properties:['openFile'],filters:[{name:'���˱���',extensions:['zip']}]});if(result.canceled)return null;return store.restore(result.filePaths[0]);});
- win=new BrowserWindow({width:1440,height:940,minWidth:1050,minHeight:720,title:'���ֱ��� �� ���԰�',backgroundColor:'#f5f6f1',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
+ handler('backup',async()=>{const result=await dialog.showSaveDialog(win,{title:'备份全部发票和日历',defaultPath:'BaoZhang-Backup-'+new Date().toISOString().slice(0,10)+'.zip',filters:[{name:'报账备份',extensions:['zip']}]});if(result.canceled)return null;return store.backup(result.filePath);});
+ handler('restore',async()=>{const result=await dialog.showOpenDialog(win,{title:'恢复电脑版备份（合并，不覆盖已有票据）',properties:['openFile'],filters:[{name:'报账备份',extensions:['zip']}]});if(result.canceled)return null;return store.restore(result.filePaths[0]);});
+ win=new BrowserWindow({width:1440,height:940,minWidth:1050,minHeight:720,title:'随手报账 · 电脑版',backgroundColor:'#f5f6f1',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',(event,url)=>{if(url!==allowedURL)event.preventDefault();});
- win.webContents.on('will-prevent-unload',event=>{const choice=testing?0:dialog.showMessageBoxSync(win,{type:'question',buttons:['���ر���','�˳�������δ�����޸�'],defaultId:0,cancelId:0,title:'����δ��ɵĲ���',message:'��ǰ��δ������޸Ļ�����ʶ���Ʊ�ݡ�',detail:'�ѱ����Ʊ�ݺ�ԭ���ᱣ�����˳���ֹͣ���ڽ��е�ʶ��'});if(choice===1)event.preventDefault();});
+ win.webContents.on('will-prevent-unload',event=>{const choice=testing?0:dialog.showMessageBoxSync(win,{type:'question',buttons:['返回保存','退出并放弃未保存修改'],defaultId:0,cancelId:0,title:'还有未完成的操作',message:'当前有未保存的修改或正在识别的票据。',detail:'已保存的票据和原件会保留。退出会停止正在进行的识别。'});if(choice===1)event.preventDefault();});
  win.on('closed',()=>{if(workerPromise)workerPromise.then(w=>w.terminate()).catch(()=>{});});await win.loadURL(allowedURL);
-}).catch(e=>{dialog.showErrorBox('���ֱ�������ʧ��',e.message);app.quit();});
+}).catch(e=>{dialog.showErrorBox('随手报账启动失败',e.message);app.quit();});
 app.on('window-all-closed',()=>app.quit());
 }
