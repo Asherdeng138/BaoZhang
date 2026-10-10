@@ -106,6 +106,9 @@ public class MainActivity extends Activity {
         else if(request==FOLDER){if(result==RESULT_OK&&intent!=null&&intent.getData()!=null){Uri u=intent.getData();emit("busy","正在保存文件…");submit(()->saveToFolder(u));}else emit("cancel",null);}
     }
     private void handleBack(){if(web!=null)web.evaluateJavascript("window.handleBack()",null);}
+    // Android 13+ uses the OnBackInvokedDispatcher registered in onCreate.
+    // This override is only the Android 8-12 compatibility path.
+    @android.annotation.SuppressLint("GestureBackNavigation")
     @Override public void onBackPressed(){handleBack();}
     @Override protected void onDestroy(){super.onDestroy();worker.shutdown();if(web!=null){web.removeJavascriptInterface("Native");web.destroy();web=null;}}
     final class Bridge {
