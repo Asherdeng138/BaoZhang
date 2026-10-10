@@ -1,6 +1,8 @@
 # 随手报账 · Android 项目
 
-当前交付是源码、构建脚本和可交互界面预览，**不含已经编译的 APK**。本次环境没有 JDK / Android SDK，且不允许下载编译依赖，因此未完成安卓编译或手机实测。请勿将界面演示当作已安装的安卓应用。
+**0.1.0 APK 已于 2026-10-10 成功编译并签名。** Java 单元测试、发票解析测试、Android lint、APK 签名和 16 KB ZIP/ELF 对齐检查已通过。尚未在 Android 16 真机/模拟器执行完整流程。
+
+[下载构建产物](https://github.com/Asherdeng138/BaoZhang/actions/runs/38008637242)：登录 GitHub，在 Artifacts 中下载 `BaoZhang-Android16`，解压得到 `BaoZhang-0.1.0.apk`，传到手机并安装。若系统询问，请允许当前文件管理器安装此来源的应用。
 
 ## 已实现的功能
 
@@ -61,7 +63,7 @@ PDF 顺序与 Excel 明细一致，按日期从早到晚排列。Excel 的“合
 
 ## 当前限制与待验收项目
 
-- **尚未编译 APK、尚未在 Android 16 真机/模拟器执行**，无法宣称已经安装验证通过。
+- APK 已编译签名；**尚未在 Android 16 真机/模拟器执行**，未宣称完成真机验收。
 - Android 编译和目标版本为 API 36；最低 Android 8.0，包含 arm64-v8a 和 x86_64 架构。
 - OCR 使用内置的 ML Kit 拉丁文和中文模型，在设备上识别。发票照片需清楚；金额识别是规则提取候选值，不能保证准确，必须核对。
 - 商家取候选文字，所在地由你手动填写。
@@ -70,7 +72,7 @@ PDF 顺序与 Excel 明细一致，按日期从早到晚排列。Excel 的“合
 - 单个附件最多 50 MB、单个 PDF 最多 200 页、一张记录最多 30 个附件、一次导出最多 200 页。较大批次可能需要分批。
 - 当前使用系统相机拍照，没有自动裁边和透视矫正。可先在相册编辑图片再导入。
 - 本机存储，无账号、云同步或多人共享；已从合并 Manifest 移除联网权限。
-- 16 KB 内存页设备仍需 APK 原生库 ELF 对齐检查及实机 OCR 测试；ZIP 对齐检查不能替代这些检查。
+- 已通过 16 KB APK ZIP 对齐和所有已打包 64 位原生库 ELF LOAD 对齐检查；仍需设备上的 OCR 实测。
 
 ## 验证情况
 
@@ -81,7 +83,11 @@ PDF 顺序与 Excel 明细一致，按日期从早到晚排列。Excel 的“合
 - `tests/ui.test.cjs`：浏览器交互测试通过，覆盖彩色日历、每日票据、分类优先导出、选择合计、日期标记、模拟本地图片导入、固定英镑、文本转义、预览数据保存、360px 宽度布局。
 - `Build-Windows.ps1`：PowerShell 语法检查通过。
 
-未运行：Java 编译、`XlsxWriterTest`、Android lint、APK 签名验证、安卓相机/文件选择器/ML Kit/SQLite/PDF 导出的实机测试。源码中已提供测试和构建步骤。
+GitHub Actions 已运行通过：Java 编译、`XlsxWriterTest`、Android lint、release APK 打包、APK v2 签名验证、16 KB ZIP/ELF 对齐。
+
+APK SHA-256：`d6f7bbbcced26398037298bd678cd75a1ef6cc2ed0d526fd06e74dd58c6de249`。
+
+未运行：安卓真机/模拟器上的相机、文件选择器、ML Kit、SQLite 和 PDF 导出完整流程。
 
 截图位于 `verification/`。浏览器测试只验证界面和模拟交互，不代表安卓端功能已经通过。
 
@@ -95,7 +101,8 @@ PDF 顺序与 Excel 明细一致，按日期从早到晚排列。Excel 的“合
 - `XlsxWriter.java`：Excel 明细与汇总；文字按文本写入，金额按数字写入。
 - `app/src/test/`：Excel 文件结构和金额测试（需要 JDK/Gradle）。
 - `tests/`：可以在 Node.js 中运行的解析和浏览器测试。
-- `.github/workflows/android.yml`：可选的 GitHub 手动构建流程，需要自己的签名密钥 Secret；本次没有创建仓库或触发云构建。
+- `.github/workflows/android.yml`：GitHub 手动构建流程。首个 APK 已由云端构建。后续构建必须复用已交付签名备份，并设置 `ANDROID_KEYSTORE_BASE64`（personal-release.p12 的 Base64）和 `ANDROID_KEYSTORE_PASSWORD`（signing.properties 中的 storePassword）两个仓库 Secret；不会自动生成不同签名的新安装包。
+- `BaoZhang-Signing-Backup.zip` 为私下交付的更新签名备份；不要提交仓库或公开分享。本地构建前把其中 `.tools/` 放回项目根目录。
 
 ## 官方开发参考
 
@@ -104,4 +111,4 @@ PDF 顺序与 Excel 明细一致，按日期从早到晚排列。Excel 的“合
 - ML Kit 文字识别：https://developers.google.com/ml-kit/vision/text-recognition/v2/android
 - Android 16 KB 内存页：https://developer.android.com/guide/practices/page-sizes
 
-版本：0.1.0 · 2026-10-09
+版本：0.1.0 · 2026-10-10

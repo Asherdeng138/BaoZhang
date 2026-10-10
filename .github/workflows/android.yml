@@ -1,8 +1,5 @@
 name: Build Android APK
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['**.md', 'verification/**', 'BaoZhang-preview.html']
   workflow_dispatch:
 permissions:
   contents: read
@@ -42,10 +39,8 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
             printf '%s' "$KEYSTORE_BASE64" | base64 --decode > .tools/personal-release.p12
           else
-            KEYSTORE_PASSWORD="$(openssl rand -hex 32)"
-            echo "::add-mask::$KEYSTORE_PASSWORD"
-            export KEYSTORE_PASSWORD
-            keytool -genkeypair -keystore .tools/personal-release.p12 -storetype PKCS12 -storepass:env KEYSTORE_PASSWORD -keypass:env KEYSTORE_PASSWORD -alias baozhang -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=BaoZhang Personal,OU=Personal App,O=Personal,C=GB'
+            echo "Configure ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD from the original signing backup before building an update." >&2
+            exit 1
           fi
           printf 'storeFile=.tools/personal-release.p12\nstorePassword=%s\nkeyAlias=baozhang\nkeyPassword=%s\n' "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" > .tools/signing.properties
           node tools/seal-signing.cjs
