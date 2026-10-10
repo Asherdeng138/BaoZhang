@@ -21,7 +21,8 @@ final class ExportService {
         File folder=new File(directory,UUID.randomUUID().toString());if(!folder.mkdirs())throw new IOException("无法创建导出目录");
         File pdfFile=new File(folder,"发票合集_"+stamp+".pdf"),xlsxFile=new File(folder,"报账汇总_"+stamp+".xlsx");
         List<XlsxWriter.Row> rows=new ArrayList<>();int page=1;
-        try(PdfDocument output=new PdfDocument()){
+        PdfDocument output=new PdfDocument();
+        try{
             for(JSONObject r:receipts){int first=page;JSONArray attachments=r.getJSONArray("documents");
                 for(int i=0;i<attachments.length();i++){
                     JSONObject d=attachments.getJSONObject(i);File f=docs.file(d.getString("name"));if(!f.isFile())throw new IOException("找不到附件，请恢复备份后导出");
@@ -36,13 +37,15 @@ final class ExportService {
             try(OutputStream out=new FileOutputStream(pdfFile)){output.writeTo(out);}
             XlsxWriter.write(xlsxFile,rows);return new File[]{pdfFile,xlsxFile};
         }catch(Exception e){pdfFile.delete();xlsxFile.delete();folder.delete();throw e;}
+        finally{output.close();}
     }
     private void addPage(PdfDocument out,Bitmap b,int index){
         // Flatten to a visible image of each original page. Original files remain unchanged.
         int width=595,height=Math.max(100,Math.round(width*b.getHeight()/(float)b.getWidth()));
         if(height>3000){height=3000;width=Math.max(100,Math.round(height*b.getWidth()/(float)b.getHeight()));}
         PdfDocument.Page page=out.startPage(new PdfDocument.PageInfo.Builder(width,height,index).create());
-        Canvas canvas=page.getCanvas();canvas.drawColor(Color.WHITE);Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);canvas.drawBitmap(b,null,new RectF(0,0,width,height),paint);out.finishPage(page);
+        try{Canvas canvas=page.getCanvas();canvas.drawColor(Color.WHITE);Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);canvas.drawBitmap(b,null,new RectF(0,0,width,height),paint);}
+        finally{out.finishPage(page);}
     }
     File backup(JSONArray receipts,JSONObject days) throws Exception {
         File f=new File(directory,"报账备份_"+System.currentTimeMillis()+".zip");Set<String> names=new HashSet<>();
