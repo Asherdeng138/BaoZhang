@@ -1,4 +1,15 @@
-# 随手报账 · Android 项目
+# 随手报账 · Android 与 Windows
+
+## Windows 电脑版 0.2.0
+
+[下载 Windows 构建产物](https://github.com/Asherdeng138/BaoZhang/actions/runs/38040238914)：登录 GitHub 后，在 Artifacts 下载 `BaoZhang-Windows`，解压运行 `release/BaoZhang-Desktop-0.2.0.exe`。支持 Windows 10/11 64 位，无需另装 Node.js、Python 或 OCR。
+
+支持批量导入图片/PDF、勾选离线识别、原件预览与人工修改、日历、按“费用种类 → 日期 → 发票”导出合并 PDF 和 Excel，以及本机备份/恢复。金额固定英镑，确认后才能参与报账导出。电脑和手机目前各自保存数据，不自动同步。
+
+已通过 4 项服务测试，并分别在开发运行与打包后的 Windows 程序上通过真实 OCR、3 文件批量导入、人工修改、4 页 PDF 合并、Excel 金额汇总、日历与数据持久化测试。EXE SHA-256：`475b11bfb2ca1d9b9b1fc77dcd1c990e31d25c95de1ac6d48f33c7c5c93beab2`。
+
+详细使用说明见 [desktop/README.md](desktop/README.md)。下面为安卓版本说明。
+
 
 **0.1.0 APK 已于 2026-10-10 成功编译并签名。** Java 单元测试、发票解析测试、Android lint、APK 签名和 16 KB ZIP/ELF 对齐检查已通过。尚未在 Android 16 真机/模拟器执行完整流程。
 
