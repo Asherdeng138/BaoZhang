@@ -1,0 +1,59 @@
+{
+  "name": "baozhang-desktop",
+  "version": "0.2.0",
+  "description": "随手报账电脑端",
+  "author": "Asher Deng",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "prepare": "node tools/prepare.cjs",
+    "build": "node tools/build.cjs",
+    "start": "electron .",
+    "test": "node --test tests/service.test.cjs",
+    "smoke": "node tests/smoke.cjs",
+    "dist": "electron-builder --win portable --x64"
+  },
+  "dependencies": {
+    "tesseract.js": "6.0.1",
+    "pdf-lib": "1.17.1",
+    "exceljs": "4.4.0",
+    "fflate": "0.8.2"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.0.12",
+    "esbuild": "0.25.10",
+    "pdfjs-dist": "5.4.296",
+    "playwright": "1.56.1"
+  },
+  "build": {
+    "appId": "com.asher.baozhang.desktop",
+    "productName": "随手报账",
+    "asar": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "service.cjs",
+      "parser.cjs",
+      "ui/**",
+      "vendor/**",
+      "models/**",
+      "THIRD-PARTY-NOTICES.txt",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "BaoZhang-Desktop-${version}.exe",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "BaoZhang-Desktop-${version}.exe"
+    }
+  }
+}

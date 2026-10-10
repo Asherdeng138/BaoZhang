@@ -1,0 +1,46 @@
+name: Build Windows Desktop
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - run: npm test
+      - run: npm run smoke
+      - run: npm run dist
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Hash package
+        shell: pwsh
+        run: |
+          $apkFile = Get-Item 'release/BaoZhang-Desktop-0.2.0.exe'
+          (Get-FileHash $apkFile.FullName -Algorithm SHA256).Hash | Set-Content 'release/BaoZhang-Desktop-0.2.0.exe.sha256'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BaoZhang-Windows
+          path: |
+            desktop/release/BaoZhang-Desktop-0.2.0.exe
+            desktop/release/BaoZhang-Desktop-0.2.0.exe.sha256
+            desktop/verification/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: desktop-diagnostics
+          path: desktop/verification/
+          retention-days: 14
