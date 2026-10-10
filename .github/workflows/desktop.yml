@@ -25,6 +25,10 @@ jobs:
       - run: npm run dist
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Test packaged Windows application
+        run: npm run smoke
+        env:
+          BAOZHANG_PACKAGED: '1'
       - name: Hash package
         shell: pwsh
         run: |
