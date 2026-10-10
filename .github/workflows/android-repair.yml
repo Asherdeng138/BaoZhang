@@ -55,16 +55,6 @@ jobs:
           cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" output/apksigner.jar
           "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 output/BaoZhang-0.1.1-unsigned.apk
           python3 tools/check-apk-alignment.py output/BaoZhang-0.1.1-unsigned.apk
-      - name: Fetch verified Windows signing runtime
-        run: |
-          python3 - <<'PY'
-          import urllib.request,json,hashlib
-          url='https://api.adoptium.net/v3/assets/latest/17/hotspot?architecture=x64&image_type=jre&os=windows&vendor=eclipse'
-          package=json.load(urllib.request.urlopen(url))[0]['binary']['package']
-          data=urllib.request.urlopen(package['link']).read()
-          assert hashlib.sha256(data).hexdigest()==package['checksum']
-          open('output/windows-jre17.zip','wb').write(data)
-          PY
       - uses: actions/upload-artifact@v4
         if: success()
         with:
@@ -76,4 +66,24 @@ jobs:
         with:
           name: Android-0.1.1-test-reports
           path: app/build/reports/
+          retention-days: 14
+
+  signing-runtime:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Package minimal local signing runtime
+        shell: pwsh
+        run: |
+          & "$env:JAVA_HOME/bin/jlink.exe" --add-modules java.base,java.logging,java.xml,jdk.crypto.ec --strip-debug --no-header-files --no-man-pages --compress=2 --output signing-jre
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to prepare signing runtime' }
+          Compress-Archive -LiteralPath signing-jre -DestinationPath windows-jre17.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-local-signing-runtime
+          path: windows-jre17.zip
           retention-days: 14
