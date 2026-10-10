@@ -4,17 +4,19 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.*;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.view.*;
 import android.webkit.*;
-import android.widget.Toast;
+import android.widget.FrameLayout;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowCompat;
 import androidx.webkit.WebViewAssetLoader;
 import org.json.*;
 import java.io.*;
@@ -32,8 +34,38 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);store=new ReceiptStore(this);docs=new Documents(this);exports=new ExportService(docs,getCacheDir());
         loadDraft();captureName=getPreferences(0).getString("captureName","");
-        web=new WebView(this);setContentView(web);
-        ViewCompat.setOnApplyWindowInsetsListener(web,(v,w)->{Insets i=w.getInsets(WindowInsetsCompat.Type.systemBars()|WindowInsetsCompat.Type.ime());v.setPadding(i.left,i.top,i.right,i.bottom);return w;});
+        // Inset the native container, not WebView's content: fixed HTML overlays
+        // must also stay below status bars and above the keyboard/navigation bar.
+        WindowCompat.setDecorFitsSystemWindows(getWindow(),false);
+        FrameLayout safeArea=new FrameLayout(this);
+        safeArea.setBackgroundColor(Color.rgb(246,247,242));
+        web=new WebView(this);web.setTag("receipt-web");
+        safeArea.addView(web,new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
+        ViewCompat.setOnApplyWindowInsetsListener(safeArea,(v,w)->{
+            int types=WindowInsetsCompat.Type.systemBars()
+                    |WindowInsetsCompat.Type.displayCutout()|WindowInsetsCompat.Type.ime();
+            Insets i=w.getInsets(types);
+            v.setPadding(i.left,i.top,i.right,i.bottom);
+            // Forward zeroed insets so newer WebViews do not add the spacing twice.
+            return new WindowInsetsCompat.Builder(w).setInsets(types,Insets.NONE).build();
+        });
+        setContentView(safeArea);
+        WindowCompat.getInsetsController(getWindow(),safeArea).setAppearanceLightStatusBars(true);
+        WindowCompat.getInsetsController(getWindow(),safeArea).setAppearanceLightNavigationBars(true);
+        ViewCompat.requestApplyInsets(safeArea);
+        web.setWebChromeClient(new WebChromeClient(){
+            @Override public boolean onJsConfirm(WebView view,String url,String message,JsResult result){
+                if(isFinishing()||isDestroyed()){result.cancel();return true;}
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("请确认").setMessage(message)
+                        .setPositiveButton("确认",(dialog,which)->result.confirm())
+                        .setNegativeButton("取消",(dialog,which)->result.cancel())
+                        .setOnCancelListener(dialog->result.cancel())
+                        .show();
+                return true;
+            }
+        });
         WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setBlockNetworkLoads(true);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         WebViewAssetLoader loader=new WebViewAssetLoader.Builder().addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
         web.setWebViewClient(new WebViewClient(){
@@ -130,3 +162,4 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void quit(){runOnUiThread(()->finish());}
     }
 }
+
