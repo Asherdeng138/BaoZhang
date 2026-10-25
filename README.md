@@ -2,6 +2,8 @@
 
 ## 最新版本：Android 0.2.1 / Windows 0.3.1（2026-10-17）
 
+**[下载最新版（安卓 APK / Windows EXE）](https://github.com/Asherdeng138/ExpenseClaims/releases/latest)**：无需登录，在 Assets 中下载 `BaoZhang-0.2.1.apk`、`BaoZhang-Desktop-0.3.1.exe` 或完整 ZIP，发布页附 SHA-256。
+
 - 0.2.1 / 0.3.1 新增：主界面合计可选择统计时间（本月〔默认〕、上月、日历所选月份、今年、全部时间）和费用类别，选择在本机记住。
 
 - 新离线识别引擎 PP-OCRv6 + 改进的日期/金额/商家解析；拍照后自动裁剪、矫正、转正，裁剪不准可在编辑页“裁剪 / 矫正”中拖动四角调整，原图始终保留。
@@ -22,9 +24,9 @@
 - 整段餐补低于额度时，两端日历、编辑预览、导出以及确认保存后均明确提示未使用金额。例如 £250 额度已用 £240，显示“还有 £10.00 额度未使用”；等于额度显示已用满，超过时显示超额，均不自动改变金额。
 - 本地引擎替换与图像预处理的取舍见 [本地 OCR 方案](docs/local-ocr-options.md)。下面的历史 APK/EXE 下载链接不包含这些源码更新。Windows 请使用 0.2.5：修复重复启动导致 OCR 文件被清理的问题，提供金额候选和可边看边填写的独立预览窗口，详见 [最新验证说明](docs/release-testing-0.2.5.md)。Android 仍为 0.1.3。
 
-## Windows 电脑版 0.2.0
+## Windows 电脑版 0.2.0（历史版本）
 
-[下载 Windows 构建产物](https://github.com/Asherdeng138/BaoZhang/actions/runs/38040238914)：登录 GitHub 后，在 Artifacts 下载 `BaoZhang-Windows`，解压运行 `release/BaoZhang-Desktop-0.2.0.exe`。支持 Windows 10/11 64 位，无需另装 Node.js、Python 或 OCR。
+最新版请从上方 [最新版下载](https://github.com/Asherdeng138/ExpenseClaims/releases/latest) 获取。以下为 0.2.0 历史记录：[下载 Windows 构建产物](https://github.com/Asherdeng138/BaoZhang/actions/runs/38040238914)：登录 GitHub 后，在 Artifacts 下载 `BaoZhang-Windows`，解压运行 `release/BaoZhang-Desktop-0.2.0.exe`。支持 Windows 10/11 64 位，无需另装 Node.js、Python 或 OCR。
 
 支持批量导入图片/PDF、勾选离线识别、原件预览与人工修改、日历、按“费用种类 → 日期 → 发票”导出合并 PDF 和 Excel，以及本机备份/恢复。金额固定英镑，确认后才能参与报账导出。电脑和手机目前各自保存数据，不自动同步。
 
@@ -35,7 +37,7 @@
 
 **0.1.0 APK 已于 2026-10-10 成功编译并签名。** Java 单元测试、发票解析测试、Android lint、APK 签名和 16 KB ZIP/ELF 对齐检查已通过。尚未在 Android 16 真机/模拟器执行完整流程。
 
-[下载构建产物](https://github.com/Asherdeng138/BaoZhang/actions/runs/38008637242)：登录 GitHub，在 Artifacts 中下载 `BaoZhang-Android16`，解压得到 `BaoZhang-0.1.0.apk`，传到手机并安装。若系统询问，请允许当前文件管理器安装此来源的应用。
+[下载 0.1.0 历史构建产物](https://github.com/Asherdeng138/BaoZhang/actions/runs/38008637242)：登录 GitHub，在 Artifacts 中下载 `BaoZhang-Android16`，解压得到 `BaoZhang-0.1.0.apk`，传到手机并安装。若系统询问，请允许当前文件管理器安装此来源的应用。
 
 ## 已实现的功能
 
