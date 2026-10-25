@@ -1,6 +1,6 @@
 {
   "name": "baozhang-desktop",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "随手报账电脑端",
   "author": "Asher Deng",
   "license": "UNLICENSED",
@@ -11,11 +11,13 @@
     "build": "node tools/build.cjs",
     "start": "electron .",
     "test": "node --test tests/service.test.cjs",
+    "test:ui": "node tests/ui.test.cjs",
     "smoke": "node tests/smoke.cjs",
-    "dist": "electron-builder --win portable --x64"
+    "dist": "electron-builder --win portable zip --x64"
   },
   "dependencies": {
     "tesseract.js": "6.0.1",
+    "onnxruntime-web": "1.22.0",
     "pdf-lib": "1.17.1",
     "exceljs": "4.4.0",
     "fflate": "0.8.2"
@@ -37,7 +39,10 @@
     "files": [
       "main.cjs",
       "preload.cjs",
+      "viewer-preload.cjs",
       "service.cjs",
+      "ocr-worker.cjs",
+      "receipt-ocr.js",
       "parser.cjs",
       "ui/**",
       "vendor/**",
@@ -47,13 +52,16 @@
     ],
     "win": {
       "target": [
-        "portable"
+        "portable",
+        "zip"
       ],
-      "artifactName": "BaoZhang-Desktop-${version}.exe",
-      "signAndEditExecutable": false
+      "artifactName": "BaoZhang-Desktop-${version}.${ext}",
+      "signAndEditExecutable": true,
+      "icon": "build/icon.ico"
     },
     "portable": {
-      "artifactName": "BaoZhang-Desktop-${version}.exe"
+      "artifactName": "BaoZhang-Desktop-${version}.exe",
+      "unpackDirName": true
     }
   }
 }

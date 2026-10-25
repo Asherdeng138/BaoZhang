@@ -29,7 +29,7 @@ jobs:
       - name: Install SDK
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Test receipt parsing
-        run: node --test tests/parser.test.cjs
+        run: node --test tests/parser.test.cjs tests/android-migration.test.cjs
       - name: Prepare signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -51,8 +51,10 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
           "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 app/build/outputs/apk/release/app-release.apk
           python3 tools/check-apk-alignment.py app/build/outputs/apk/release/app-release.apk
-          cp app/build/outputs/apk/release/app-release.apk output/BaoZhang-0.1.0.apk
-          sha256sum output/BaoZhang-0.1.0.apk > output/BaoZhang-0.1.0.apk.sha256
+          version=$(sed -n "s/.*versionName '\([^']*\)'.*/\1/p" app/build.gradle)
+          test -n "$version"
+          cp app/build/outputs/apk/release/app-release.apk "output/BaoZhang-$version.apk"
+          sha256sum "output/BaoZhang-$version.apk" > "output/BaoZhang-$version.apk.sha256"
       - uses: actions/upload-artifact@v4
         if: success()
         with:

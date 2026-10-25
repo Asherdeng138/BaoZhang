@@ -1,1 +1,3 @@
 随手报账 Desktop uses Electron (MIT), Tesseract.js (Apache-2.0), tesseract.js-core (Apache-2.0), tessdata_fast English and Simplified Chinese models (Apache-2.0), PDF.js (Apache-2.0), pdf-lib (MIT), ExcelJS (MIT), and fflate (MIT). Their license files are included with the packaged dependencies. PDF.js: https://github.com/mozilla/pdf.js ; OCR models: https://github.com/tesseract-ocr/tessdata_fast .
+onnxruntime-web 1.22.0 — MIT License, Copyright (c) Microsoft Corporation. Used offline to run the OCR models.
+PP-OCRv6 small text detection/recognition models (PaddleOCR, ONNX export distributed with the onnxocr package) — Apache License 2.0; see models/ppocr/LICENSE.

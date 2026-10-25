@@ -17,7 +17,7 @@ public class XlsxWriterTest {
             Map<String,String> content=new HashMap<>();
             try(ZipInputStream zip=new ZipInputStream(new FileInputStream(file))){ZipEntry e;while((e=zip.getNextEntry())!=null){ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] b=new byte[1024];int n;while((n=zip.read(b))!=-1)out.write(b,0,n);byte[] data=out.toByteArray();DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(data));content.put(e.getName(),new String(data,StandardCharsets.UTF_8));}}
             String detail=content.get("xl/worksheets/sheet1.xml"),summary=content.get("xl/worksheets/sheet2.xml");
-            assertNotNull(detail);assertNotNull(summary);assertTrue(detail.contains("12.80"));assertTrue(detail.contains("0.29"));assertTrue(summary.contains("13.09"));assertTrue(detail.contains("A&amp;B &lt;Shop&gt;"));assertFalse(detail.contains("<f>"));assertTrue(detail.contains("=HYPERLINK"));assertTrue(detail.contains("1–2"));assertTrue(detail.contains("金额（£）"));assertFalse(detail.contains("币种"));
+            assertNotNull(detail);assertNotNull(summary);assertTrue(detail.contains("12.80"));assertTrue(detail.contains("0.29"));assertTrue(summary.contains("13.09"));assertTrue(detail.contains("A&amp;B &lt;Shop&gt;"));assertFalse(detail.contains("<f>"));assertTrue(detail.contains("=HYPERLINK"));assertTrue(detail.contains("1–2"));assertTrue(detail.contains("金额（£）"));assertFalse(detail.contains("币种"));assertFalse(detail.contains("所在地"));assertFalse(detail.contains("London"));assertTrue(detail.contains("r=\"E2\" s=\"2\"><v>12.80</v>"));assertTrue(detail.contains("r=\"H2\""));assertTrue(detail.contains("A1:I3"));
         } finally {file.delete();}
     }
 }
