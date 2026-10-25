@@ -165,29 +165,6 @@
   // The receipt is where the text is: the rotated rectangle around all text
   // boxes, with a margin. Text-based bounds keep the bottom total of long
   // receipts and ignore plain table/background areas.
-  // Push each side of the quad outwards while the strip under it still looks like receipt
-  // paper (similar brightness, little colour); stops at the table edge or the photo border.
-  function expandToPaper(img,quad){
-    const {data,width:W,height:H}=img,px=(x,y)=>{x=Math.min(W-1,Math.max(0,Math.round(x)));y=Math.min(H-1,Math.max(0,Math.round(y)));const i=(y*W+x)*4;return [data[i],data[i+1],data[i+2]];};
-    const gray=c=>0.299*c[0]+0.587*c[1]+0.114*c[2],chroma=c=>Math.max(...c)-Math.min(...c);
-    // Paper colour: bright part of the area just inside the text region.
-    const cx=quad.reduce((s,p)=>s+p[0],0)/4,cy=quad.reduce((s,p)=>s+p[1],0)/4,samples=[];
-    for(let i=0;i<4;i++){const a=quad[i],b=quad[(i+1)%4];for(let t=0.1;t<=0.9;t+=0.05){const x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t;samples.push(px(x+(cx-x)*0.04,y+(cy-y)*0.04));}}
-    const g=samples.map(gray).sort((a,b)=>a-b),paper=g[Math.floor(g.length*0.7)],paperChroma=samples.map(chroma).sort((a,b)=>a-b)[Math.floor(samples.length/2)];
-    const diag=Math.hypot(W,H),step=diag*0.004,maxSteps=Math.round(0.07*diag/step),q=quad.map(p=>p.slice());
-    const paperLike=c=>Math.abs(gray(c)-paper)<38&&chroma(c)<paperChroma+40;
-    for(let side=0;side<4;side++){
-      const a=q[side],b=q[(side+1)%4],ex=b[0]-a[0],ey=b[1]-a[1],len=Math.hypot(ex,ey)||1;let nx=ey/len,ny=-ex/len;
-      // Normal pointing away from the centre.
-      const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;if((mx+nx-cx)**2+(my+ny-cy)**2<(mx-cx)**2+(my-cy)**2){nx=-nx;ny=-ny;}
-      let good=0;
-      for(let k=1;k<=maxSteps;k++){const d=k*step;let ok=0,n=0,out=false;
-        for(let t=0.08;t<=0.92;t+=0.04){const x=a[0]+ex*t+nx*d,y=a[1]+ey*t+ny*d;if(x<0||y<0||x>=W||y>=H){out=true;break;}n++;if(paperLike(px(x,y)))ok++;}
-        if(out||!n||ok/n<0.6)break;good=d;}
-      const m=good+step;a[0]+=nx*m;a[1]+=ny*m;b[0]+=nx*m;b[1]+=ny*m;
-    }
-    return q.map(([x,y])=>[Math.min(W-1,Math.max(0,x)),Math.min(H-1,Math.max(0,y))]);
-  }
   function receiptQuad(boxes,width,height,img){
     if(!boxes.length)return null;
     const heights=boxes.map(b=>Math.min(dist(b.points[0],b.points[3]),dist(b.points[1],b.points[2]))).sort((a,b)=>a-b);

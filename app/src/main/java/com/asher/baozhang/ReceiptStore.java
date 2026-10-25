@@ -16,7 +16,6 @@ import java.util.UUID;
 
 final class ReceiptStore extends SQLiteOpenHelper {
     static final Set<String> CATEGORIES=new HashSet<>(Arrays.asList("市内交通（地铁）","市外交通","出差餐补","办公用品","客户招待"));
-    static final Set<String> CURRENCIES=new HashSet<>(Arrays.asList("GBP","CNY","EUR","USD","JPY","HKD"));
     ReceiptStore(Context c){super(c,"receipts.db",null,2);}
     @Override public void onCreate(SQLiteDatabase db){
         db.execSQL("CREATE TABLE receipts(id TEXT PRIMARY KEY,date TEXT NOT NULL,amountMinor INTEGER NOT NULL CHECK(amountMinor>0),currency TEXT NOT NULL,category TEXT NOT NULL,merchant TEXT NOT NULL,location TEXT NOT NULL,note TEXT NOT NULL,ocr TEXT NOT NULL,documents TEXT NOT NULL,createdAt INTEGER NOT NULL,updatedAt INTEGER NOT NULL,archivedAt INTEGER NOT NULL DEFAULT 0,deletedAt INTEGER NOT NULL DEFAULT 0)");
