@@ -59,3 +59,9 @@
 
 - 主界面合计不再固定为日历月份：两端可选择统计时间（本月〔默认〕、上月、日历所选月份、今年、全部时间）和费用类别（全部或五类之一），标题写明统计范围；选择在本机记住。手机统计已保存发票，电脑统计已确认发票；回收站不计入，归档计入。
 - 共享解析器新增 `summaryRange`/`summarize`（含测试）；新增 `tests/summary.test.cjs`（手机界面选择、金额、重启后保留、360px）。
+
+## 2026-10-25 · 仓库整理（不改变安装包功能）
+
+- GitHub 仓库改名为 `Asherdeng138/ExpenseClaims`；Android 0.2.1 / Windows 0.3.1 发布为 GitHub Release `v0.2.1-0.3.1`（上传的三个安装包与 10-17 交付文件 SHA-256 一致）。新增 `tools/publish-release.cmd/.ps1`：核对哈希后用 GitHub CLI 发布。
+- README 重写为当前版本说明，删除旧 0.1.0 / 0.2.0 下载链接和互相矛盾的旧描述；desktop/README 同步更新。旧 README 原文和各版测试记录移到 `docs/history/`。
+- 删除无用代码：`receipt-ocr.js`（两份）中已停用的 `expandToPaper`（按纸张边缘扩展裁剪，评测变差后未再调用）；`ReceiptStore.CURRENCIES`（未被使用的多币种列表）；`tools/package-preview.cjs`（0.2.0 起生成的浏览器演示缺少识别脚本，已无法使用）。

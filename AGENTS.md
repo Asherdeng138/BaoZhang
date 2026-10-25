@@ -20,7 +20,7 @@
 - 两端各自存储，无账号、服务器、云同步或多人协作；票据识别在本机执行。
 - 出差餐补按票据记录，不自动生成无票补贴。用户已确认：仅餐补按连续出差天数 × £50 累计额度，单日可超 £50；超过整段额度只提示，不阻止保存或导出。
 
-用户的明确需求决定目标行为；源码和测试说明当前行为；[README.md](README.md) 与 [desktop/README.md](desktop/README.md) 提供使用说明和历史验证记录。发现相互冲突时指出具体位置，并向用户确认影响需求的部分。不要通过猜测新增报销规则、汇率、类别、同步协议或验收结论。
+用户的明确需求决定目标行为；源码和测试说明当前行为；[README.md](README.md) 与 [desktop/README.md](desktop/README.md) 提供使用说明，[docs/CHANGELOG.md](docs/CHANGELOG.md) 记录改动与测试，[docs/history/](docs/history/) 保存旧版说明和验证记录。发现相互冲突时指出具体位置，并向用户确认影响需求的部分。不要通过猜测新增报销规则、汇率、类别、同步协议或验收结论。
 
 需求含糊、输入缺失或存在多种影响结果的解释时，直接向用户提出具体问题，说明差异；等待期间继续不依赖答案的工作。例行内部实现选择由主代理处理，不要求用户逐步批准已授权的工作。
 
@@ -40,7 +40,7 @@
 | Windows 界面 | `desktop/ui/app.src.js`、`index.html`、`style.css` | 批量工作台、逐张编辑、PDF.js 预览/文本读取/栅格化、批量识别队列、日历和导出 |
 | 票据解析 | `app/src/main/assets/parser.js`、`desktop/parser.cjs` | 日期/金额/商家候选值、警告、分币转换、类别和筛选；两份必须相同（`tests/parser-sync.test.cjs` 检查） |
 | 识别与裁剪 | `receipt-ocr.js`（Android assets 与 desktop 各一份，内容相同）、`app/src/main/assets/scan.js`、`desktop/ocr-worker.cjs` | 离线 PP-OCRv6（onnxruntime-web WASM）文字检测识别、按文字区域自动裁剪与透视矫正、方向校正；Android 先用 ML Kit 结果，再融合新结果；Windows 失败时回退 Tesseract |
-| 构建与分发 | Gradle 文件、`Build-Windows.ps1`、`build.cmd`、`desktop/tools/`、`.github/workflows/`、`tools/` | Android 工具链/签名/对齐检查；桌面 OCR 模型准备、前端打包和 EXE；浏览器演示打包 |
+| 构建与分发 | Gradle 文件、`Build-Windows.ps1`、`build.cmd`、`desktop/tools/`、`.github/workflows/`、`tools/` | Android 工具链/签名/对齐检查；桌面 OCR 模型准备、前端打包和 EXE；GitHub 发布脚本 |
 
 界面负责交互和预览，原生桥与服务负责持久化、文件访问和业务校验。修改桥接接口时，同时检查调用方、桥、实现和测试。导出资格不能只靠前端勾选状态保证。
 
@@ -63,7 +63,7 @@ Windows PDF 识别先读前 3 页的文本层；某页有效文字不足 35 字�
 | 限制 | 单附件 50 MB，批量最多 30 文件/250 MB；单 PDF 1–200 页，一次导出最多 200 页 | 单文件 50 MB，每批 1–100 个文件，一次导出最多 300 页，备份总量最多 250 MB |
 | ZIP 备份 | `receipts.json` 使用 `schemaVersion:1`，附 `documents/`；含已保存票据和日历，不包含独立草稿；当前无一键恢复 | `receipts.json` 使用 `version:1`，附 `documents/`；支持合并恢复并跳过重复原件，不覆盖已有日历标记 |
 
-两端数据结构和备份不直接互通；不能因为都叫 `receipts.json` 就混用。Android 中遗留的 `CURRENCIES` 常量以及解析器对其他货币符号的识别，不代表支持多币种；实际保存固定 GBP，不做汇率换算。
+两端数据结构和备份不直接互通；不能因为都叫 `receipts.json` 就混用。数据库中的 `currency` 列以及解析器对其他货币符号的识别，不代表支持多币种；实际保存固定 GBP，不做汇率换算。
 
 以下是必须保持的业务约束，除非用户明确要求改变：
 
@@ -96,7 +96,7 @@ Windows PDF 识别先读前 3 页的文本层；某页有效文字不足 35 字�
 1. 定位实际仓库根目录，阅读相关代码、README、测试和配置；检查已有修改。没有 Git 元数据的源码包也可工作，但不能声称创建了提交或 PR。
 2. 明确目标、涉及平台、数据影响和验收方式。需求歧义直接询问用户；架构、格式、跨端行为的未知项不能用默认猜测代替。
 3. 在授权范围内实现最小完整变更。文档修改不顺带重构业务；平台专有需求不自动扩展到另一端。公共规则则必须评估两端。
-4. 修改源码入口，不直接修生成的 `desktop/ui/app.js` 或 `BaoZhang-preview.html`。需要时通过构建脚本再生成。
+4. 修改源码入口，不直接修生成的 `desktop/ui/app.js`。需要时通过构建脚本再生成。
 5. 完成与变更相称的验证，核对最终差异；说明修改内容、原因、实际测试结果和未验收范围。
 
 明确需求中的产品边界变化可以实施；如果用户只提出局部需求，而实现需要引入云服务、多币种、跨端恢复、无票补贴或改变确认规则，先就该变化向用户澄清。普通可逆修改不设置额外的“计划后必须停下审批”步骤。
