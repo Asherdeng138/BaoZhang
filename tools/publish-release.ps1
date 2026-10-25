@@ -4,6 +4,11 @@
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '..')
 $repo = 'Asherdeng138/ExpenseClaims'
+Start-Transcript -Path 'output/publish-release-last.txt' -Force | Out-Null
+# winget 刚安装后，已打开的资源管理器可能还没有新的 PATH，按默认安装位置补上
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+  foreach ($d in @((Join-Path $env:ProgramFiles 'GitHub CLI'), (Join-Path $env:LOCALAPPDATA 'Programs\GitHub CLI'))) { if (Test-Path (Join-Path $d 'gh.exe')) { $env:Path = "$d;$env:Path" } }
+}
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw '未找到 GitHub CLI。请先运行：winget install --id GitHub.cli' }
 cmd /c "gh auth status >nul 2>nul"
