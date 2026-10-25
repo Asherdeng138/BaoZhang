@@ -4,7 +4,10 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
@@ -74,8 +77,32 @@ final class Documents {
             b.eraseColor(Color.WHITE);p.render(b,null,null,PdfRenderer.Page.RENDER_MODE_FOR_PRINT);return b;
         }
     }
-    Bitmap preview(JSONObject d) throws Exception {
-        File f=file(d.getString("name"));if(d.getString("mime").equals("application/pdf")){try(ParcelFileDescriptor fd=ParcelFileDescriptor.open(f,ParcelFileDescriptor.MODE_READ_ONLY);PdfRenderer pdf=new PdfRenderer(fd)){return pdfPage(pdf,0,1800);}}return image(f,1800);
+    Bitmap preview(JSONObject d) throws Exception {return preview(d,0,1800);}
+    Bitmap preview(JSONObject d,int page,int max) throws Exception {return preview(d,page,max,false);}
+    /** Crop stored with an image attachment, or null (PDFs, missing or invalid values). */
+    static CropSpec crop(JSONObject d){
+        JSONObject c=d.optJSONObject("crop");if(c==null||!d.optString("mime").startsWith("image/"))return null;
+        org.json.JSONArray q=c.optJSONArray("quad");if(q==null||q.length()!=4)return null;
+        double[] v=new double[8];for(int i=0;i<4;i++){org.json.JSONArray p=q.optJSONArray(i);if(p==null||p.length()!=2)return null;v[2*i]=p.optDouble(0,Double.NaN);v[2*i+1]=p.optDouble(1,Double.NaN);}
+        return CropSpec.of(v,c.optInt("rotate",0));
+    }
+    /** Perspective-corrects and rotates a decoded image; the source file is untouched. */
+    static Bitmap applyCrop(Bitmap src,CropSpec c){
+        if(c==null||(c.isFullFrame()&&c.rotate==0))return src;
+        float[] p=c.pixels(src.getWidth(),src.getHeight());int[] size=CropSpec.outputSize(p);
+        int w=size[0],h=size[1];float scale=Math.min(1f,4000f/Math.max(w,h));w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));
+        Matrix m=new Matrix();if(!m.setPolyToPoly(p,0,new float[]{0,0,w,0,w,h,0,h},0,4))return src;
+        if(c.rotate!=0){Matrix r=new Matrix();r.setRotate(c.rotate);RectF b=new RectF(0,0,w,h);r.mapRect(b);r.postTranslate(-b.left,-b.top);m.postConcat(r);if(c.rotate!=180){int t=w;w=h;h=t;}}
+        Bitmap out=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);out.eraseColor(Color.WHITE);
+        new Canvas(out).drawBitmap(src,m,new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
+        src.recycle();return out;
+    }
+    Bitmap preview(JSONObject d,int page,int max,boolean raw) throws Exception {
+        File f=file(d.getString("name"));
+        CropSpec c=raw?null:crop(d);
+        // Decode larger when cropping so the receipt keeps enough detail.
+        if(c!=null&&page==0&&!d.getString("mime").equals("application/pdf")){Bitmap b=image(f,Math.min(4000,max*2));if(b==null)throw new IOException("图片解码失败");Bitmap out=applyCrop(b,c);
+            int longSide=Math.max(out.getWidth(),out.getHeight());if(longSide>max){float r=max/(float)longSide;Bitmap s=Bitmap.createScaledBitmap(out,Math.max(1,Math.round(out.getWidth()*r)),Math.max(1,Math.round(out.getHeight()*r)),true);if(s!=out)out.recycle();return s;}return out;}if(d.getString("mime").equals("application/pdf")){try(ParcelFileDescriptor fd=ParcelFileDescriptor.open(f,ParcelFileDescriptor.MODE_READ_ONLY);PdfRenderer pdf=new PdfRenderer(fd)){if(page<0||page>=pdf.getPageCount())throw new IOException("页码无效");return pdfPage(pdf,page,max);}}if(page!=0)throw new IOException("页码无效");return image(f,max);
     }
     String ocr(JSONObject d) throws Exception {
         // Parse one invoice per entry. For a multi-page invoice, the first 3 pages are OCRed.

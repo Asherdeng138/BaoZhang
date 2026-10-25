@@ -32,14 +32,15 @@ jobs:
       - name: Hash package
         shell: pwsh
         run: |
-          $apkFile = Get-Item 'release/BaoZhang-Desktop-0.2.0.exe'
-          (Get-FileHash $apkFile.FullName -Algorithm SHA256).Hash | Set-Content 'release/BaoZhang-Desktop-0.2.0.exe.sha256'
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $exe = Get-Item "release/BaoZhang-Desktop-$version.exe"
+          (Get-FileHash $exe.FullName -Algorithm SHA256).Hash | Set-Content "$($exe.FullName).sha256"
       - uses: actions/upload-artifact@v4
         with:
           name: BaoZhang-Windows
           path: |
-            desktop/release/BaoZhang-Desktop-0.2.0.exe
-            desktop/release/BaoZhang-Desktop-0.2.0.exe.sha256
+            desktop/release/BaoZhang-Desktop-*.exe
+            desktop/release/BaoZhang-Desktop-*.exe.sha256
             desktop/verification/
           retention-days: 90
       - uses: actions/upload-artifact@v4

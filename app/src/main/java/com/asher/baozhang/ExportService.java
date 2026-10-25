@@ -13,13 +13,13 @@ import java.util.zip.*;
 final class ExportService {
     final Documents docs;final File directory;
     ExportService(Documents d,File cache){docs=d;directory=new File(cache,"exports");directory.mkdirs();}
-    File[] export(List<JSONObject> receipts) throws Exception {
+    File[] export(List<JSONObject> receipts,String category,String from,String to) throws Exception {
         if(receipts.isEmpty())throw new IOException("没有选中的发票");
+        String base=ExportNames.base(category,from,to);
         int count=0;for(JSONObject r:receipts){JSONArray a=r.getJSONArray("documents");for(int i=0;i<a.length();i++)count+=a.getJSONObject(i).getInt("pages");}
         if(count>200)throw new IOException("一次最多导出200页，请缩短日期范围");
-        String stamp=new java.text.SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US).format(new Date());
         File folder=new File(directory,UUID.randomUUID().toString());if(!folder.mkdirs())throw new IOException("无法创建导出目录");
-        File pdfFile=new File(folder,"发票合集_"+stamp+".pdf"),xlsxFile=new File(folder,"报账汇总_"+stamp+".xlsx");
+        File pdfFile=new File(folder,base+"_发票合集.pdf"),xlsxFile=new File(folder,base+"_明细汇总.xlsx");
         List<XlsxWriter.Row> rows=new ArrayList<>();int page=1;
         PdfDocument output=new PdfDocument();
         try{
@@ -30,7 +30,7 @@ final class ExportService {
                         try(ParcelFileDescriptor fd=ParcelFileDescriptor.open(f,ParcelFileDescriptor.MODE_READ_ONLY);PdfRenderer renderer=new PdfRenderer(fd)){
                             for(int p=0;p<renderer.getPageCount();p++){Bitmap b=Documents.pdfPage(renderer,p,2200);try{addPage(output,b,page++);}finally{b.recycle();}}
                         }
-                    }else{Bitmap b=Documents.image(f,2400);if(b==null)throw new IOException("无法解码发票图片");try{addPage(output,b,page++);}finally{b.recycle();}}
+                    }else{CropSpec crop=Documents.crop(d);Bitmap b=Documents.image(f,crop==null?2400:3600);if(b==null)throw new IOException("无法解码发票图片");b=Documents.applyCrop(b,crop);try{addPage(output,b,page++);}finally{b.recycle();}}
                 }
                 rows.add(new XlsxWriter.Row(r.getString("id"),r.getString("date"),r.getString("category"),"GBP",r.getString("merchant"),r.optString("location"),r.optString("note"),r.getLong("amountMinor"),attachments.length(),first==page-1?String.valueOf(first):first+"–"+(page-1)));
             }

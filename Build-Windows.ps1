@@ -52,7 +52,9 @@ $gradleDir = Join-Path $toolDir 'gradle-8.13'
 if (-not (Test-Path (Join-Path $gradleDir 'bin\gradle.bat'))) {
     Write-Host '[2/5] Downloading Gradle 8.13...'
     $gradleUrl = 'https://services.gradle.org/distributions/gradle-8.13-bin.zip'
-    $gradleHash = (Invoke-WebRequest -UseBasicParsing -Uri ($gradleUrl+'.sha256')).Content.Trim()
+    $hashContent = (Invoke-WebRequest -UseBasicParsing -Uri ($gradleUrl+'.sha256')).Content
+    $gradleHash = if ($hashContent -is [byte[]]) { [Text.Encoding]::UTF8.GetString($hashContent).Trim() } else { ([string]$hashContent).Trim() }
+    if ($gradleHash -notmatch '^[a-fA-F0-9]{64}$') { throw 'Invalid Gradle distribution checksum response.' }
     $archive = Join-Path $toolDir 'gradle-8.13-bin.zip'
     Download-Checked $gradleUrl $archive $gradleHash
     Expand-Archive -LiteralPath $archive -DestinationPath $toolDir -Force
@@ -103,7 +105,9 @@ if (-not (Test-Path -LiteralPath $apk)) { throw 'Signed APK was not produced.' }
 if ($LASTEXITCODE -ne 0) { throw 'APK signature verification failed.' }
 & (Join-Path $sdkDir 'build-tools\36.0.0\zipalign.exe') -c -P 16 4 $apk
 if ($LASTEXITCODE -ne 0) { throw 'APK archive alignment verification failed.' }
-$target=Join-Path $outputDir 'BaoZhang-0.1.0.apk'
+$versionMatch=[regex]::Match([IO.File]::ReadAllText((Join-Path $projectDir 'app\build.gradle')), "versionName\s+'([^']+)'")
+if (-not $versionMatch.Success) { throw 'Could not read Android versionName.' }
+$target=Join-Path $outputDir ('BaoZhang-'+$versionMatch.Groups[1].Value+'.apk')
 Copy-Item -LiteralPath $apk -Destination $target -Force
 (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash | Set-Content -LiteralPath ($target+'.sha256') -Encoding ascii
 Write-Host "Success: $target"
