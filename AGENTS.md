@@ -52,7 +52,7 @@ Windows PDF 识别先读前 3 页的文本层；某页有效文字不足 35 字�
 
 | 项目 | Android | Windows |
 | --- | --- | --- |
-| 当前版本 | `app/build.gradle`：0.2.0，versionCode 5 | `desktop/package.json`：0.3.0 |
+| 当前版本 | `app/build.gradle`：0.2.1，versionCode 6 | `desktop/package.json`：0.3.1 |
 | 平台基线 | 最低 API 26，编译/目标 API 36；arm64-v8a、x86_64 | Windows 10/11 x64，Electron portable EXE 与文件夹 ZIP |
 | 持久化 | 应用私有目录中的 `receipts.db`、`documents/`、`draft.json` | `app.getPath('userData')/data/receipts.json`、`documents/` |
 | 元数据格式 | SQLite 版本 2（从 v1 非破坏升级）；每条记录有 `currency`、`ocr`、`documents[]` | JSON `{version:1,receipts:[],days:{}}`；记录有 `blob`、`sha256`、`ocrText`、`status`、`confirmed` |
